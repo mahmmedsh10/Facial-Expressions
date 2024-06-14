@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn about facial expressions</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    
+</head>
+<body>
+    <header>
+        <h1>Facial Expressions</h1>
+    </header>
+    <main>
+        <input type="file" id="image-input">
+        <div id="label-container"></div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    <script type="text/javascript">
+        const URL = "https://teachablemachine.withgoogle.com/models/RBIiLly1z/";
+
+        let model, labelContainer, maxPredictions;
+
+      
+        async function init() {
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+
+           
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+
+            // append elements to the DOM
+            labelContainer = document.getElementById("label-container");
+            for (let i = 0; i < maxPredictions; i++) { // and class labels
+                labelContainer.appendChild(document.createElement("div"));
+            }
+
+            // Add event listener to the file input element
+            document.getElementById("image-input").addEventListener("change", (event) => {
+                const file = event.target.files[0];
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    await predict(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        async function predict(img) {
+  // predict can take in an image, video or canvas html element
+  const prediction = await model.predict(img);
+  let maxClass = "";
+  for (let i = 0; i < maxPredictions; i++) {
+    if (prediction[i].probability > 0.5) {
+      maxClass = prediction[i].className;
+      break;
+    }
+  }
+
+  let emoji = "";
+  switch (maxClass) {
+    case "Angry":
+      emoji = "😡";
+      break;
+    case "Happy":
+      emoji = "😊";
+      break;
+    case "Neutral":
+      emoji = "😐";
+      break;
+    case "Sad":
+      emoji = "😔";
+      break;
+    default:
+      emoji = "😕";
+      break;
+  }
+
+  const labelContainer = document.getElementById("label-container");
+  labelContainer.innerHTML = ""; 
+
+  const imgElement = document.createElement("img");
+  imgElement.src = img.src;
+  imgElement.width = 200; 
+  imgElement.height = 200; 
+  labelContainer.appendChild(imgElement);
+
+  const resultElement = document.createElement("div");
+  resultElement.style.width = "170px"; 
+  resultElement.style.height = "40px"; 
+  resultElement.style.border = "2px solid #ccc"; 
+  resultElement.style.padding = "20px"; 
+  resultElement.style.textAlign = "center"; 
+  resultElement.style.fontSize = "24px";
+  resultElement.style.fontWeight = "bold";
+  resultElement.style.color = "#222";
+  resultElement.innerHTML = `${maxClass} ${emoji}`;
+  labelContainer.appendChild(resultElement);
+
+}
+        init();
+    </script>
+</body>
+</html>
